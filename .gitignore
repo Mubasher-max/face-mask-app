@@ -1,0 +1,17 @@
+﻿echo ".venv/
+env/
+venv/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.h5
+*.csv
+*.npy
+*.zip
+*.pkl
+Dataset/
+log.csv
+.DS_Store
+Thumbs.db
+uploads/" > .gitignore

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Mask Classifier</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styling.css') }}">
+</head>
+
+<body>
+<div class="container">
+    <h1> Dear Examiner:Tayyab Waqar </h1>
+    <h1>Our Beloved Supervisor:Umair Ali </h1>
+
+    <h2>Face Mask Classifier</h2>
+
+    <!-- âœ… Global File Input (placed outside the forms) -->
+    <input type="file" id="file-input" required>
+    <h2>Real-Time Prediction</h2>
+    <div id="prediction-result" style="margin-top: 10px;"></div>
+
+    <form id="prediction-form" action="/predict" method="POST" enctype="multipart/form-data">
+        <button type="submit" class="buttons">Predict</button>
+    </form>
+    <p id="prediction-output">
+
+    <h2 class="report-title">ðŸ“‹ Classification Report</h2>
+
+    <div class="report-button-container">
+        <button onclick="getReport()" class="buttons">
+            Generate Report
+        </button>
+    </div>
+
+    <div id="report-output" class="report-output"></div>
+
+    <button id="runEvaluationButton" onclick="evaluateModel()" class="buttons">Run Evaluation</button>
+
+    <div id="loadingMsg" style="display:none; margin-top:10px;">Loading evaluation... please wait â³</div>
+    <div id="spinner" style="display:none;">
+        <div class="loader"></div>
+    </div>
+
+    <div id="statusHeader" class="section"></div>
+    <div id="results" class="section" style="display:none;"></div>
+    <div id="aucScores" class="section"></div>
+    <img id="rocCurve" src="" alt="ROC Curve" style="display:none; width: 600px;"/>
+    <div id="classificationReport" class="section" style="margin-top: 20px;"></div>
+
+    <button id="retrainButton" class="buttons">Retrain Model</button>
+    <p id="retrainStatus"></p>
+
+
+    <h2>Preprocessing</h2>
+    <div style="display: flex;">
+
+        <form id="normalize-form" action="/normalize" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons"> image normalization</button>
+        </form>
+
+        <form id="noise-reduction-form" action="/noise_reduction" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Noise Reduction</button>
+        </form>
+
+        <form id="artifact-removal-form" action="/artifact_removal" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Artifact Removal</button>
+        </form>
+    </div>
+    <div id="preprocessing-message-box"></div>
+    <img id="preprocessing-output" style="max-width: 100%; margin-top: 10px; display: none;">
+
+
+    <h2>Data Augmentation</h2>
+    <div style="display: flex; flex-wrap: wrap;">
+        <form id="rotate-form" action="/rotate" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Rotation</button>
+        </form>
+        <form id="random-cropping-form" action="/random_crop" method="POST" enctype="multipart/form-data">
+
+            <button type="submit" class="buttons">random cropping</button>
+        </form>
+        <form id="translation-form" action="/translation" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Translation</button>
+        </form>
+        <form id="scaling-form" action="/scaling" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Scaling</button>
+        </form>
+        <form id="flipping-form" action="/flipping" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Flipping</button>
+        </form>
+        <form id="elastic-deformation-form" action="/elastic_deformation" method="POST"
+              enctype="multipart/form-data">
+            <button type="submit" class="buttons">Elastic Deformation</button>
+        </form>
+        <form id="intensity-adjustment-form" action="/intensity_adjustment" method="POST"
+              enctype="multipart/form-data">
+            <button type="submit" class="buttons">Intensity Adjustment</button>
+        </form>
+        <form id="noise-injection-form" action="/noise_injection" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Noise Injection</button>
+        </form>
+        <form id="shearing-form" action="/shearing" method="POST" enctype="multipart/form-data">
+            <button type="submit" class="buttons">Shearing</button>
+        </form>
+    </div>
+    <!--  Display response message -->
+    <div id="augmentation-message-box"></div>
+    <img id="augmentation-output" style="max-width: 100%; margin-top: 10px; display: none;">
+
+    <form id="model-form" action="/select_model" method="POST">
+        <h2>Investigate deep learning architectures</h2>
+        <label>Choose a model:</label>
+        <select id="model" name="model" class="model-selection">
+            <option value="unet">U-Net</option>
+            <option value="3d-cnn">3D CNN</option>
+            <option value="v-net">V-Net</option>
+            <option value="deepmedic">DeepMedic</option>
+            <option value="resnet">ResNet</option>
+            <option value="attention">Attention Mechanism</option>
+            <option value="yolo">YOLO</option>
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+
+    <!-- Output for model selection -->
+    <div id="model-output"></div>
+</div>
+
+<script>
+    //  Handle form submission
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // âœ… Handle model selection form separately
+            if (this.id === 'model-form') {
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action, {
+                        method: this.method,
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    document.getElementById('model-output').innerText = result.message || result.error;
+                } catch (error) {
+                    document.getElementById('model-output').innerText = 'Error occurred while processing model selection.';
+                    console.error('Error:', error);
+                }
+                return;
+            }
+
+            // Handle file-based forms
+            const fileInput = document.getElementById('file-input');
+            if (!fileInput.files.length) {
+                if (this.id === 'rotate-form' || this.id === 'translation-form' || this.id === 'scaling-form' ||
+                    this.id === 'flipping-form' || this.id === 'elastic-deformation-form' || this.id === 'intensity-adjustment-form' ||
+                    this.id === 'noise-injection-form' || this.id === 'shearing-form' || this.id === 'random-cropping-form') {
+                    document.getElementById('augmentation-message-box').innerText = 'Please select a file first.';
+                } else if (this.id === 'noise-reduction-form' || this.id === 'artifact-removal-form' ||
+                           this.id === 'normalize-form') {
+                    document.getElementById('preprocessing-message-box').innerText = 'Please select a file first.';
+                } else if (this.id === 'prediction-form') {
+                    document.getElementById('prediction-output').innerText = 'Please select a file for prediction.';
+                }
+                return;
+            }
+
+            //  Create FormData and attach file manually
+            const formData = new FormData(this);
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: this.method,
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (this.id === 'prediction-form') {
+                    // âœ… Prediction response handling
+                    document.getElementById('prediction-output').innerText = result.message || result.error;
+                } else if (this.id === 'rotate-form' || this.id === 'translation-form' || this.id === 'scaling-form' ||
+                           this.id === 'flipping-form' || this.id === 'elastic-deformation-form' || this.id === 'intensity-adjustment-form' ||
+                           this.id === 'noise-injection-form' || this.id === 'shearing-form' || this.id === 'random-cropping-form') {
+                    // âœ… Augmentation response handling
+                    document.getElementById('augmentation-message-box').innerText = result.message || result.error;
+                    if (result.encoded_image) {
+                        document.getElementById('augmentation-output').src = `data:image/jpeg;base64,${result.encoded_image}`;
+                        document.getElementById('augmentation-output').style.display = 'block';
+                    }
+                } else {
+                    // âœ… Preprocessing response handling
+                    document.getElementById('preprocessing-message-box').innerText = result.message || result.error;
+                    if (result.encoded_image) {
+                        document.getElementById('preprocessing-output').src = `data:image/jpeg;base64,${result.encoded_image}`;
+                        document.getElementById('preprocessing-output').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                if (this.id === 'prediction-form') {
+                    document.getElementById('prediction-output').innerText = 'Error occurred during prediction.';
+                } else if (this.id === 'rotate-form' || this.id === 'translation-form' || this.id === 'scaling-form' ||
+                           this.id === 'flipping-form' || this.id === 'elastic-deformation-form' || this.id === 'intensity-adjustment-form' ||
+                           this.id === 'noise-injection-form' || this.id === 'shearing-form' || this.id === 'random-cropping-form') {
+                    document.getElementById('augmentation-message-box').innerText = 'Error occurred while processing data augmentation.';
+                } else {
+                    document.getElementById('preprocessing-message-box').innerText = 'Error occurred while processing preprocessing.';
+                }
+                console.error('Error:', error);
+            }
+        });
+    });
+
+    //  Real-Time Prediction Button Handler (optional if you have a form submit version now)
+    document.getElementById('predict-button')?.addEventListener('click', async () => {
+        const fileInput = document.getElementById('file-input');
+        const resultBox = document.getElementById('prediction-result');
+
+        if (!fileInput.files.length) {
+            resultBox.innerText = 'Please select a file for prediction.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            resultBox.innerText = result.message || result.error || 'Prediction completed.';
+        } catch (error) {
+            resultBox.innerText = 'Error occurred during prediction.';
+            console.error('Prediction error:', error);
+        }
+    });
+
+</script>
+
+
+<script>
+    async function getReport() {
+     const reportBox = document.getElementById('report-output');
+     try {
+         const response = await fetch('/generate_report');
+         const data = await response.json();
+         if (data.error) {
+             reportBox.innerText = data.error;
+         } else {
+             reportBox.innerText =
+ ` ${data.Date}
+  With Mask: ${data["With Mask"]}
+  Improperly Worn Mask: ${data["Improperly Worn Mask"]}
+  Without Mask: ${data["Without Mask"]}
+ ðŸ§® Total Classified: ${data["Total Classified"]}
+
+ ${data.Log}`;
+         }
+     } catch (error) {
+         reportBox.innerText = 'âŒ Failed to fetch report.';
+         console.error('Report error:', error);
+     }
+ }
+
+</script>
+<script>
+document.getElementById('retrainButton').addEventListener('click', function () {
+    // Immediately show starting message
+    const statusElem = document.getElementById('retrainStatus');
+    statusElem.innerText = "🔄 Retraining started...";
+
+    fetch('/train')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show Flask response message (should be ✅ Retraining completed!)
+            statusElem.innerText = data.message;
+        })
+        .catch(error => {
+            console.error('Error during training:', error);
+            statusElem.innerText = "❌ Failed to retrain model.";
+        });
+});
+</script>
+
+
+
+<script>
+    function evaluateModel() {
+        const btn = document.getElementById('runEvaluationButton');
+        const spinner = document.getElementById('spinner');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const results = document.getElementById('results');
+        const rocCurve = document.getElementById('rocCurve');
+        const aucScores = document.getElementById('aucScores');
+        const statusHeader = document.getElementById('statusHeader');
+        const classificationReport = document.getElementById('classificationReport');
+
+        btn.disabled = true;
+        loadingMsg.style.display = 'block';
+        spinner.style.display = 'block';
+        results.style.display = 'none';
+        statusHeader.innerHTML = '';
+        aucScores.innerHTML = '';
+        rocCurve.style.display = 'none';
+        classificationReport.innerHTML = '';
+
+        fetch('/evaluate', { method: 'POST' })
+        .then(res => {
+            if (!res.ok) return res.json().then(data => { throw new Error(data.error); });
+            return res.json();
+        })
+        .then(data => {
+            loadingMsg.style.display = 'none';
+            spinner.style.display = 'none';
+            results.style.display = 'block';
+            rocCurve.src = data.roc_curve_path;
+            rocCurve.style.display = 'block';
+
+            statusHeader.innerHTML = `<h2> Evaluation Completed!</h2>`;
+
+            let aucHtml = '<h3>“ˆ AUC Scores per Class:</h3><ul>';
+            for (const [label, score] of Object.entries(data.auc_scores)) {
+                aucHtml += `<li><strong>${label}:</strong> ${score}</li>`;
+            }
+            aucHtml += '</ul>';
+            aucScores.innerHTML = aucHtml;
+
+            let metricsTable = "<h3>ðŸ“Š Precision, Recall & F1-Score:</h3><table border='1' style='border-collapse: collapse;'>";
+            metricsTable += "<tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1-Score</th></tr>";
+            for (const [label, scores] of Object.entries(data.metrics_per_class)) {
+                metricsTable += `<tr>
+                                    <td>${label}</td>
+                                    <td>${scores.precision}</td>
+                                    <td>${scores.recall}</td>
+                                    <td>${scores["f1-score"]}</td>
+                                </tr>`;
+            }
+            metricsTable += "</table>";
+            classificationReport.innerHTML = metricsTable;
+
+            btn.disabled = false;
+        })
+        .catch(err => {
+            loadingMsg.style.display = 'none';
+            spinner.style.display = 'none';
+            statusHeader.innerHTML = `<span style="color:red;">âš ï¸ ${err.message}</span>`;
+            btn.disabled = false;
+        });
+    }
+
+</script>
+
+</body>
+</html>
+
+</body>
+
+</html>

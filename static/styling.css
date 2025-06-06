@@ -1,0 +1,104 @@
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #e2e8f0; /* Soft background */
+        font-family: Arial, sans-serif;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-color: #f8fafc; /* White-ish card */
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 700px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+        color: #1e293b;
+        margin: 10px 0;
+    }
+
+
+
+    .buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 160px;
+        height: 35px;
+        background-color: green; /* Soft blue-grey */
+        color: black;
+        margin: 10px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+
+    }
+
+    .buttons:hover,
+    form button:hover {
+        background-color: purple;
+        color: black;
+    }
+
+    input[type="file"] {
+        margin: 20px 0;
+    }
+
+    .model-selection {
+        margin: 15px;
+    }
+
+
+    #report-output,
+    #evaluationStatus,
+    #aucScores,
+    #classificationReport {
+        width: 80%;
+        background-color: #f1f5f9; /* Light soft */
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Spinner */
+    .spinner, .loader {
+        border: 8px solid #f3f3f3; /* Light grey */
+        border-top: 8px solid #2563eb; /* Blue */
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+#preprocessing-message-box,
+#augmentation-message-box,
+#model-output{
+    width: 200px;
+    height: 40px;
+    background-color: rgb(234, 226, 226);
+    color: rgb(39, 29, 15);
+    border: 1px solid;
+}
+#prediction-output{
+ width: 250px;
+    height: 40px;
+    background-color: rgb(234, 226, 226);
+    color: rgb(39, 29, 15);
+    border: 1px solid;
+}
+
